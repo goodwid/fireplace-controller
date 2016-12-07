@@ -1,4 +1,4 @@
-let isOff = true;
+let isOn = false;
 let timeout = 25 * 60 * 1000;
 const wifi = require('Wifi');
 const http = require('http');
@@ -18,17 +18,17 @@ function headers (type) {
 }
 
 function fpOn(timer) {
-  digitalWrite(RELAY, false);
+  digitalWrite(RELAY, true);
   clearTimeout();
   setTimeout(() => {
-    isOff = fpOff();
+    isOn = fpOff();
   }, timer)
-  return false;
+  return true;
 }
 
 function fpOff() {
-  digitalWrite(RELAY, true);
-  return true;
+  digitalWrite(RELAY, false);
+  return false;
 }
 
 function main() {
@@ -37,19 +37,19 @@ function main() {
     if (req.headers.Authorization === apiKey) auth = true;
     if (req.method === 'GET') {
       if (req.url === '/on' && auth) {
-        isOff = fpOn(timeout);
+        isOn = fpOn(timeout);
         res.writeHead(200, headers('application/json'));
         return res.end('{"message":"Fireplace turned on!"}');
       } else if (req.url === '/off' && auth) {
-        isOff = fpOff();
+        isOn = fpOff();
         res.writeHead(200, headers('application/json'));
         return res.end('{"message":"Fireplace turned off!"}');
       } else if (req.url === '/status' && auth) {
         res.writeHead(200, headers('application/json'));
-        let status = isOff ? 'off' : 'on';
+        let status = isOn ? 'on' : 'off';
         let result = {
           message: `The fireplace is currently ${status}`,
-          status: isOff,
+          status: isOn,
           timeout: `The current timer is ${timeout / 1000 / 60} minutes.`
         };
         return res.end(JSON.stringify(result));
@@ -70,10 +70,10 @@ function main() {
   });
 
   setWatch(() => {
-    if (isOff) {
-      isOff = fpOn(timeout);
+    if (isOn) {
+      isOn = fpOff();
     } else {
-      isOff = fpOff();
+      isOn = fpOn(timeout);
     }
   }, BTN, {repeat: true, edge: 'rising', debounce: 500});
 
