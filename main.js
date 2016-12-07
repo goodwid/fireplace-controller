@@ -1,8 +1,9 @@
+import configFactory from './config'; // eslint-disable-line
+
 let isOn = false;
 let timeout = 25 * 60 * 1000;
 const wifi = require('Wifi');
 const http = require('http');
-import configFactory from './config';
 const {ssid, password, apiKey} = configFactory();
 const RELAY = NodeMCU.D2;
 const BTN = NodeMCU.D3
@@ -57,11 +58,17 @@ function main() {
         res.writeHead(400, {'Content/Type': 'application/json'});
         return res.end(`{"error":"Unknown endpoint ${req.url}"}`);
       }
-    } else if (req.method === 'POST') {
+    } else if (req.method === 'POST' && auth) {
+      let result = ''
       let parsed = url.parse(req.url);
-      let newTimeout = parsed.query.split('=')[1];
-      timeout = newTimeout * 60 * 1000;
-      let result = {message: `Timeout set to ${newTimeout} minutes`};
+      let newTimeout = Math.ceil(parsed.query.split('=')[1]);
+      if (newTimeout < 1) {
+        result = {message: `Timeout set to minimum value of 1 minute`};
+        timeout = 60 * 1000;
+      } else {
+        timeout = newTimeout * 60 * 1000;
+        result = {message: `Timeout set to ${newTimeout} minutes`};
+      }
       res.writeHead(200, headers('application/json'));
       return res.end(JSON.stringify(result));
     }
