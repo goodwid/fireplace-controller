@@ -1,5 +1,5 @@
 let isOff = true;
-const timeout = 25 * 60 * 1000;
+let timeout = 25 * 60 * 1000;
 const wifi = require('Wifi');
 const http = require('http');
 import configFactory from './config';
@@ -32,7 +32,7 @@ function fpOff() {
 }
 
 function main() {
-  http.createServer((req, res) => {
+  let server = http.createServer((req, res) => {
     let auth;
     if (req.headers.Authorization === apiKey) auth = true;
     if (req.method === 'GET') {
@@ -67,7 +67,7 @@ function main() {
     }
     res.writeHead(404, {'Content-Type': 'text/plain'});
     return res.end('Not found');
-  }).listen(80);
+  });
 
   setWatch(() => {
     if (isOff) {
@@ -80,6 +80,7 @@ function main() {
   wifi.connect(ssid, {password}, err => {
     if (err) console.log('Problem: ', err);
     console.log('** connected.  IP address: ',wifi.getIP().ip);
+    server.listen(80);
   });
   wifi.save();
 }
