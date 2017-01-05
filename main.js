@@ -1,12 +1,13 @@
-import configFactory from './config'; // eslint-disable-line
-
-let isOn = false;
-let timeout = 25 * 60 * 1000;
+import configFactory from './config';
+const {ssid, password, apiKey} = configFactory();
 const wifi = require('Wifi');
 const http = require('http');
-const {ssid, password, apiKey} = configFactory();
+const sensor = require('DS18B20').connect(ow);
+const ow = new OneWire(NodeMCU.D6);
 const RELAY = NodeMCU.D2;
 const BTN = NodeMCU.D3
+let isOn = false;
+let timeout = 25 * 60 * 1000;
 
 function headers (type) {
   return {
@@ -30,6 +31,12 @@ function fpOn(timer) {
 function fpOff() {
   digitalWrite(RELAY, false);
   return false;
+}
+
+function reportTemp() {
+  sensor.getTemp(temp => {
+    console.log(`Temp is ${temp*(9/5)+32}F`);
+  });
 }
 
 function main() {
@@ -76,6 +83,8 @@ function main() {
     return res.end('Not found');
   });
 
+
+
   setWatch(() => {
     if (isOn) {
       isOn = fpOff();
@@ -86,7 +95,8 @@ function main() {
 
   wifi.connect(ssid, {password}, err => {
     if (err) console.log('Problem: ', err);
-    console.log('** connected.  IP address: ',wifi.getIP().ip);
+    console.log('** connected. IP address: ',wifi.getIP().ip);
+    reportTemp();
     server.listen(80);
   });
   wifi.save();
