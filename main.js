@@ -41,21 +41,28 @@ function reportTemp() {
 
 function main() {
   let server = http.createServer((req, res) => {
-    let auth;
+    let auth = false;
+    let result = ''
     if (req.headers.Authorization === apiKey) auth = true;
     if (req.method === 'GET') {
       if (req.url === '/on' && auth) {
         isOn = fpOn(timeout);
         res.writeHead(200, headers('application/json'));
-        return res.end('{"message":"Fireplace turned on!"}');
+        result = {
+          message: 'Fireplace turned on!'
+        };
+        return res.end(JSON.stringify(result));
       } else if (req.url === '/off' && auth) {
         isOn = fpOff();
         res.writeHead(200, headers('application/json'));
-        return res.end('{"message":"Fireplace turned off!"}');
+        result = {
+          message: 'Fireplace turned off!'
+        };
+        return res.end(JSON.stringify(result));
       } else if (req.url === '/status' && auth) {
         res.writeHead(200, headers('application/json'));
         let status = isOn ? 'on' : 'off';
-        let result = {
+        result = {
           message: `The fireplace is currently ${status}`,
           status: isOn,
           timeout: `The current timer is ${timeout / 1000 / 60} minutes.`
@@ -66,11 +73,10 @@ function main() {
         return res.end(`{"error":"Unknown endpoint ${req.url}"}`);
       }
     } else if (req.method === 'POST' && auth) {
-      let result = ''
       let parsed = url.parse(req.url);
       let newTimeout = Math.ceil(parsed.query.split('=')[1]);
       if (newTimeout < 1) {
-        result = {message: `Timeout set to minimum value of 1 minute`};
+        result = {message: 'Timeout set to minimum value of 1 minute'};
         timeout = 60 * 1000;
       } else {
         timeout = newTimeout * 60 * 1000;
