@@ -2,12 +2,21 @@ import configFactory from './config';
 const {ssid, password, apiKey} = configFactory();
 const wifi = require('Wifi');
 const http = require('http');
-const sensor = require('DS18B20').connect(ow);
-const ow = new OneWire(NodeMCU.D6);
 const RELAY = NodeMCU.D2;
 const BTN = NodeMCU.D3
 let isOn = false;
 let timeout = 25 * 60 * 1000;
+
+// const TEMP = 12;
+// pinMode(TEMP, 'input_pullup');
+// const ow = new OneWire(TEMP);
+// const sensor = require('DS18B20').connect(ow);
+// function reportTemp() {
+//   sensor.getTemp(temp => {
+//     console.log(`Temp is ${temp*(9/5)+32}F`);
+//   });
+// }
+
 
 function headers (type) {
   return {
@@ -33,11 +42,6 @@ function fpOff() {
   return false;
 }
 
-function reportTemp() {
-  sensor.getTemp(temp => {
-    console.log(`Temp is ${temp*(9/5)+32}F`);
-  });
-}
 
 function main() {
   let server = http.createServer((req, res) => {
@@ -102,7 +106,7 @@ function main() {
   wifi.connect(ssid, {password}, err => {
     if (err) console.log('Problem: ', err);
     console.log('** connected. IP address: ',wifi.getIP().ip);
-    reportTemp();
+    // reportTemp();
     server.listen(80);
   });
   wifi.save();
