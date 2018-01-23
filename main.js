@@ -6,17 +6,7 @@ const RELAY = NodeMCU.D2;
 const BTN = NodeMCU.D3
 let isOn = false;
 let timeout = 25 * 60 * 1000;
-
-// const TEMP = 12;
-// pinMode(TEMP, 'input_pullup');
-// const ow = new OneWire(TEMP);
-// const sensor = require('DS18B20').connect(ow);
-// function reportTemp() {
-//   sensor.getTemp(temp => {
-//     console.log(`Temp is ${temp*(9/5)+32}F`);
-//   });
-// }
-
+let onAt;
 
 function headers (type) {
   return {
@@ -29,6 +19,7 @@ function headers (type) {
 }
 
 function fpOn(timer) {
+  onAt = new Date();
   digitalWrite(RELAY, true);
   clearTimeout();
   setTimeout(() => {
@@ -38,6 +29,7 @@ function fpOn(timer) {
 }
 
 function fpOff() {
+  onAt = null;
   digitalWrite(RELAY, false);
   return false;
 }
@@ -53,7 +45,8 @@ function main() {
         isOn = fpOn(timeout);
         res.writeHead(200, headers('application/json'));
         result = {
-          message: 'Fireplace turned on!'
+          message: 'Fireplace turned on!',
+          onAt
         };
         return res.end(JSON.stringify(result));
       } else if (req.url === '/off' && auth) {
@@ -69,6 +62,7 @@ function main() {
         result = {
           message: `The fireplace is currently ${status}`,
           status: isOn,
+          onAt,
           timeout: `The current timer is ${timeout / 1000 / 60} minutes.`
         };
         return res.end(JSON.stringify(result));
@@ -93,8 +87,6 @@ function main() {
     return res.end('Not found');
   });
 
-
-
   setWatch(() => {
     if (isOn) {
       isOn = fpOff();
@@ -106,7 +98,6 @@ function main() {
   wifi.connect(ssid, {password}, err => {
     if (err) console.log('Problem: ', err);
     console.log('** connected. IP address: ',wifi.getIP().ip);
-    // reportTemp();
     server.listen(80);
   });
   wifi.save();
