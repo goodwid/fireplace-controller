@@ -9,10 +9,7 @@
     "repl": "node ./scripts/repl"
   },
   "devDependencies": {
-    "thingssdk-deployer": "1.0.0",
-    "thingssdk-espruino-strategy": "1.0.0"
-  },
-  "engines": {
-    "espruino": "1.88"
+    "thingssdk-deployer": "^1.0.1",
+    "thingssdk-espruino-strategy": "^1.0.3"
   }
 }
