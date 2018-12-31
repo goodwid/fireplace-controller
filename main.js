@@ -1,10 +1,18 @@
 import { config } from './config';
 const wifi = require('Wifi');
-const mqtt = require('MQTT').create(config.server);
+const options = {
+  client_id: 'upstairs_fireplace',
+  port: 1883,
+  keep_alive: 900,
+  clean_session: true
+};
+
+const mqtt = require('MQTT').create(config.server, options);
+
 const controlTopic = `homeassist/${config.deviceId}/control`
 const statusTopic = `homeassist/${config.deviceId}/status`;
 const timerTopic = `homeassist/${config.deviceId}/timer`;
-// const http = require('http');
+
 const RELAY = NodeMCU.D2;
 const BTN = NodeMCU.D3
 let isOn = false;
@@ -30,6 +38,11 @@ function main() {
   mqtt.on('connected', function() {
     mqtt.subscribe(controlTopic);
     mqtt.subscribe(timerTopic);
+  });
+
+  mqtt.on('disconnected', () => {
+    console.log('disconnected.  Reconnecting');
+    setTimeout(() => mqtt.connect(), 3500)
   });
 
   mqtt.on('publish', pub => {
